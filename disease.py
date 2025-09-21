@@ -6,12 +6,19 @@ from io import BytesIO
 from PIL import Image
 import tensorflow as tf
 import logging
+import os
+from keras.layers import TFSMLayer
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env
+load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()
 
-# CORS middleware for allowing specific origins
-origins = ["http://localhost", "http://127.0.0.1:5500"]
+# CORS middleware for allowing specific origins (read from env or fallback)
+origins = os.getenv("CORS_ORIGINS", "http://localhost,http://127.0.0.1:5500").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -20,12 +27,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load the pre-trained model from the correct path
-from keras.layers import TFSMLayer
+# Load the pre-trained model path and serving endpoint from env variables
+MODEL_PATH = os.getenv("MODEL_PATH", "model/7")
+CALL_ENDPOINT = os.getenv("CALL_ENDPOINT", "serving_default")
 
-MODEL = TFSMLayer("model/7", call_endpoint="serving_default")
+MODEL = TFSMLayer(MODEL_PATH, call_endpoint=CALL_ENDPOINT)
 
-CLASS_NAMES = ["Early Blight", "Late Blight", "Healthy"]
+CLASS_NAMES = os.getenv("CLASS_NAMES", "Early Blight,Late Blight,Healthy").split(",")
 
 # Logger setup
 logging.basicConfig(level=logging.INFO)
@@ -38,7 +46,7 @@ async def ping():
 # Function to read and preprocess the image file
 def read_file_as_image(data) -> np.ndarray:
     try:
-        image = Image.open(BytesIO(data)).convert("RGB")  # 🔹 Force 3 channels
+        image = Image.open(BytesIO(data)).convert("RGB")  # Force 3 channels
         image = np.array(image)
         image = tf.image.resize(image, (256, 256))
         image = image / 255.0
@@ -47,24 +55,20 @@ def read_file_as_image(data) -> np.ndarray:
         logging.error(f"Error reading image: {e}")
         raise HTTPException(status_code=400, detail="Failed to read image file")
 
-
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     try:
         image = read_file_as_image(await file.read())
         img_batch = np.expand_dims(image, 0)
-
         # Run prediction
         predictions = MODEL(img_batch, training=False)
-
-        # Log the raw prediction for debugging
         logging.info(f"Raw predictions: {predictions}")
 
-        # Some models output dicts instead of tensors
+        # Handle dict output
         if isinstance(predictions, dict):
             predictions = list(predictions.values())[0]
 
-        # Convert to numpy if it’s still a tensor
+        # Convert tensor to numpy if needed
         if hasattr(predictions, "numpy"):
             predictions = predictions.numpy()
 
@@ -80,7 +84,4 @@ async def predict(file: UploadFile = File(...)):
         logging.error(f"Error during prediction: {e}")
         raise HTTPException(status_code=500, detail="Failed to make prediction")
 
-
-# Run the app using Uvicorn
-# if __name__ == "__main__":
-#     uvicorn.run(app, host='localhost', port=8000)
+# Note: No need for UVicorn run block for deployment to Render
