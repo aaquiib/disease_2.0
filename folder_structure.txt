@@ -1,0 +1,27 @@
+e:\diseaseProject2.0
+├── .env
+├── .git/
+├── .gitattributes
+├── .gitignore
+├── disease.css
+├── disease.html
+├── disease.js
+├── disease.py
+├── disease_env/
+│   ├── Include/
+│   ├── Lib/
+│   │   └── site-packages/
+│   ├── pyvenv.cfg
+│   └── Scripts/
+├── model/
+│   └── 7/
+│       ├── assets/
+│       ├── fingerprint.pb
+│       ├── keras_metadata.pb
+│       ├── saved_model.pb
+│       └── variables/
+│           ├── variables.data-00000-of-00001
+│           └── variables.index
+├── requirements.txt
+└── __pycache__/
+    └── disease.cpython-312.pyc
