@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Detection</title>
+    <link rel="stylesheet" href="disease.css">
+</head>
+<body>
+    <div class="container">
+        <h1>UPLOAD IMAGE FOR DETECTION</h1>
+        <div class="upload-section">
+            <form>
+                <input type="file" id="imageUpload" accept="image/*">
+                <button type="submit" class="upload-button">Upload and Predict</button>
+            </form>
+        </div>
+        <div class="scrollable-content">
+            <div class="image-preview">
+                <img id="previewImage" src="#" alt="Preview" style="display: none;">
+            </div>
+            <div class="results">
+                <p id="className"></p>
+                <p id="confidence"></p>
+            </div>
+        </div>
+    </div>
+    <script src="disease.js"></script>
+</body>
+</html>
